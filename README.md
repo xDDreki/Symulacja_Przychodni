@@ -1,0 +1,2 @@
+# Symulacja_Przychodni
+
