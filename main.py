@@ -12,6 +12,7 @@ Liczba gabinetów lekarskich - count_rooms
 
 data = []
 data_arrival = []
+data_waiting = []
 
 simulation_time = 480  # Czas symulacji w minutach
 
