@@ -67,6 +67,6 @@ env = simpy.Environment()
 
 clinic = Clinic(env, number_of_rooms=3, service_time=15)
 
-clinic.run(420)
+clinic.run(420) 
 
 
