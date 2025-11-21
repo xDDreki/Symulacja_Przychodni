@@ -4,6 +4,7 @@
 - procesowanie danych
 *lekarze przerwa od pracy
 - naprawić żeby klienci nie wchodzili do gabinetu {service_time} przed zamknięciem
+- dlugosci kolejki
 """
 import matplotlib
 
@@ -96,17 +97,19 @@ class Clinic:
             for room in self.list_rooms:
                 patients_served_ls.append(room.patients_served)
                 id_ls.append(str(room.id))
-            seaborn.barplot(x=id_ls, y=patients_served_ls)
+            fig = seaborn.barplot(x=id_ls, y=patients_served_ls)
+            fig.set_xlabel('Gabinet')
+            fig.set_ylabel('Ilosc Pacjentow')
             plt.savefig("patients_served_noshow.png")
-            plt.close()
+            plt.show()
 
         patient_bar_plot()
 
-
+#z umowieniami
 env = simpy.Environment()
 
 clinic = Clinic(env, number_of_rooms=3, service_time=20)
 
 clinic.run(420)
 
-# clinic.stats()
+clinic.stats()
