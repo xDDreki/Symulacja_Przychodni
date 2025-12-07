@@ -31,11 +31,12 @@ class Gabinet:
         self.env = env
         self.patients_served = 0
         self.no_show = 0
+        self.queue = []
         self.resource = simpy.Resource(env, capacity=1)
 
 
 class Clinic:
-    def __init__(self, env, number_of_rooms, service_time, no_show=0.2, seed=None):
+    def __init__(self, env, number_of_rooms, service_time, no_show=0.2, seed=None, sim_time=480):
         self.curr_patient_id = 1
         self.env = env
         self.service_time = service_time
@@ -43,11 +44,13 @@ class Clinic:
         self.seed = seed
         self.list_rooms = [Gabinet(id=i + 1, env=self.env) for i in range(number_of_rooms)]
         self.processed_patients = []
+        self.sim_time = sim_time
+
         if self.seed:
             random.seed(self.seed)
 
     def czas(self):
-        hours = 9+self.env.now//60
+        hours = 8 + self.env.now//60
         minutes = self.env.now%60
         if len(str(minutes))==1:
             return f"{hours}:0{minutes}"
@@ -58,37 +61,41 @@ class Clinic:
             return self.service_time
 
         while True:
+            if self.env.now > self.sim_time - self.service_time:  # Pacjenci nie przychodzą przed {service_time} zamknięciem
+                break
             patient = Pacjent(id=f"{room.id}.{self.curr_patient_id}")
-
-            if random.random() < self.no_show:
+            patient.room = room.id
+            if random.random() < self.no_show: #pacjent nie  przyszedl
                 print(f'Czas {self.czas()}: Pacjent {patient.id} nie pojawił w gabinecie {room.id} w ciągu 15 minut')
-                patient.room = room.id
                 room.no_show += 1
-                self.curr_patient_id += 1
-                yield self.env.timeout(15)
-            else:
+
+            else: #pacjent przyszedl
                 patient.arrival_time = self.env.now
                 print(f"Czas {self.czas()}: Pacjent {patient.id} przybył do kliniki")
-                patient.room = room.id
                 self.env.process(self.serve_patient(patient, room))
-                self.curr_patient_id += 1
-                yield self.env.timeout(time_between_new_patients())
+
+            self.curr_patient_id += 1
+            yield self.env.timeout(time_between_new_patients())
 
     def serve_patient(self, patient, room):
+        room.queue.append(patient.id)
+        # print(room.queue)
         with room.resource.request() as request:
             yield request
             patient.service_start_time = self.env.now
+            room.queue.remove(patient.id)
             print(f"Czas {self.czas()}: Pacjent {patient.id} wchodzi do gabinetu {room.id} ")
+            # print(room.queue)
             yield self.env.timeout(self.service_time)
             patient.service_end_time = self.env.now
             room.patients_served += 1
             print(f"Czas {self.czas()}: Pacjent {patient.id} wychodzi z gabinetu {room.id}")
             self.processed_patients.append(patient)
 
-    def run(self, sim_time):
+    def run(self):
         for room in self.list_rooms:
             self.env.process(self.generate_patients(room))
-        env.run(until=sim_time)
+        env.run(until=self.sim_time + 0.01)
 
     def stats(self):
         def patient_bar_plot():
@@ -108,8 +115,8 @@ class Clinic:
 #z umowieniami
 env = simpy.Environment()
 
-clinic = Clinic(env, number_of_rooms=3, service_time=20)
+clinic = Clinic(env, number_of_rooms=3, service_time=15)
 
-clinic.run(420)
+clinic.run()
 
 clinic.stats()
