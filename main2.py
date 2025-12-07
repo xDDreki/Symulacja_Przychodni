@@ -112,7 +112,7 @@ class Clinic:
 #z umowieniami
 env = simpy.Environment()
 
-clinic = Clinic(env, number_of_rooms=3, service_time=15)
+clinic = Clinic(env, number_of_rooms=1, service_time=15)
 
 clinic.run()
 
