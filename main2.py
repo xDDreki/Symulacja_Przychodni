@@ -7,7 +7,6 @@
 - dlugosci kolejki
 """
 import matplotlib
-
 matplotlib.use('TkAgg')  # or 'Qt5Agg'
 import numpy as np
 import simpy
@@ -79,13 +78,11 @@ class Clinic:
 
     def serve_patient(self, patient, room):
         room.queue.append(patient.id)
-        # print(room.queue)
         with room.resource.request() as request:
             yield request
             patient.service_start_time = self.env.now
             room.queue.remove(patient.id)
             print(f"Czas {self.czas()}: Pacjent {patient.id} wchodzi do gabinetu {room.id} ")
-            # print(room.queue)
             yield self.env.timeout(self.service_time)
             patient.service_end_time = self.env.now
             room.patients_served += 1
