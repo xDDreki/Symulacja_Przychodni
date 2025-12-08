@@ -35,9 +35,9 @@ class Gabinet:
 
 
 class Clinic:
-    def __init__(self, env, number_of_rooms, service_time, no_show=0.2, seed=None, sim_time=480):
+    def __init__(self, number_of_rooms, service_time, no_show=0.2, seed=None, sim_time=480):
         self.curr_patient_id = 1
-        self.env = env
+        self.env = simpy.Environment()
         self.service_time = service_time
         self.no_show = no_show
         self.seed = seed
@@ -92,7 +92,14 @@ class Clinic:
     def run(self):
         for room in self.list_rooms:
             self.env.process(self.generate_patients(room))
-        env.run(until=self.sim_time + 0.01)
+        self.env.run(until=self.sim_time + 0.01)
+
+    def run_multiple_times(self, n):
+        for i in range(1, n+1):
+            print(f"-----------{i}-----------")
+            self.run()
+            self.env = simpy.Environment()
+
 
     def stats(self):
         def patient_bar_plot():
@@ -110,10 +117,12 @@ class Clinic:
         patient_bar_plot()
 
 #z umowieniami
-env = simpy.Environment()
+# env = simpy.Environment()
 
-clinic = Clinic(env, number_of_rooms=1, service_time=15)
+clinic = Clinic(number_of_rooms=1, service_time=15)
 
-clinic.run()
+# clinic.run()
 
-clinic.stats()
+# clinic.stats()
+
+clinic.run_multiple_time(10)
