@@ -27,7 +27,6 @@ class Pacjent:
 class Gabinet:
     def __init__(self, id, env):
         self.id = id
-        self.env = env
         self.patients_served = 0
         self.no_show = 0
         self.queue = []
@@ -65,7 +64,7 @@ class Clinic:
             patient = Pacjent(id=f"{room.id}.{self.curr_patient_id}")
             patient.room = room.id
             if random.random() < self.no_show: #pacjent nie  przyszedl
-                print(f'Czas {self.czas()}: Pacjent {patient.id} nie pojawił w gabinecie {room.id} w ciągu 15 minut')
+                print(f'Czas {self.czas()}: Pacjent {patient.id} nie pojawił w gabinecie {room.id} w ciągu {self.service_time} minut')
                 room.no_show += 1
 
             else: #pacjent przyszedl
@@ -99,6 +98,9 @@ class Clinic:
             print(f"-----------{i}-----------")
             self.run()
             self.env = simpy.Environment()
+            self.curr_patient_id = 1
+            self.list_rooms = [Gabinet(id=i + 1, env=self.env) for i in range(len(self.list_rooms))]
+            self.processed_patients = []
 
 
     def stats(self):
@@ -125,4 +127,4 @@ clinic = Clinic(number_of_rooms=1, service_time=15)
 
 # clinic.stats()
 
-clinic.run_multiple_time(10)
+clinic.run_multiple_times(10)
