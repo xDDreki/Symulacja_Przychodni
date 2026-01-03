@@ -3,3 +3,9 @@ env
 patients_served_noshow.png
 patients_served.png
 *~
+wyniki_bez_um.csv
+wyniki_z_um.csv
+__pycache__/
+pomocnicze_funkcje.pyc
+pomocnicze_funkcje.pyo
+pomocnicze_funkcje.cpython-313.pyc
