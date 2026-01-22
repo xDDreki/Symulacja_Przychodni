@@ -10,7 +10,7 @@ def readable_time(time):
 def randomized_service_time(mean=15, std=2, minimal_time=5):
     return max(np.random.normal(mean, std), minimal_time)
 
-def stats(patient_df, queue_df, service_minutes):
+def stats(patient_df, queue_df, service_minutes=15, total_time_hours=8):
     #czas oczekiwania na wizyte
     avg_waiting_time = patient_df["waiting_time"].mean()
     print(f"Średni czas oczekiwania: {round(avg_waiting_time,2)} min")
@@ -61,3 +61,10 @@ def stats(patient_df, queue_df, service_minutes):
     # Średnia ze wszystkich dni
     overall_avg_queue = np.mean(daily_queue_lengths) if daily_queue_lengths else 0
     print(f"Średnia długość kolejki: {round(overall_avg_queue, 2)}")
+
+    #Czas pracy lekarzy
+    num_doctors = patient_df['room'].nunique()
+    total_service_time = patient_df["service_time"].sum()
+    total_available_minutes =  total_time_hours * 60 * n * num_doctors
+    doctor_utilization = (total_service_time / total_available_minutes) * 100
+    print(f"Średnie wykorzystanie lekarza: {round(doctor_utilization, 2)} %")
