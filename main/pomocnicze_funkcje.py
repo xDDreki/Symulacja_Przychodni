@@ -10,21 +10,44 @@ def readable_time(time):
 def randomized_service_time(mean=15, std=2, minimal_time=5):
     return max(np.random.normal(mean, std), minimal_time)
 
+def print_statistics(data, label, unit=""):
+    """
+    Wypisuje statystyki dla danego zbioru danych.
+    
+    Args:
+        data: lista lub tablica wartości
+        label: nazwa statystyki (np. "czas oczekiwania na wizytę")
+        unit: jednostka (np. "min", "%")
+    """
+    print(f"\n--- Statystyki {label} ---")
+    print(f"Średnia: {np.mean(data):.2f} {unit}")
+    print(f"Mediana: {np.median(data):.2f} {unit}")
+    print(f"Odchylenie standardowe: {np.std(data):.2f} {unit}")
+    print(f"Min: {np.min(data):.2f} {unit}")
+    print(f"Max: {np.max(data):.2f} {unit}")
+    print(f"\nPercentyle:")
+    print(f"25. percentyl: {np.percentile(data, 25):.2f} {unit}")
+    print(f"95. percentyl: {np.percentile(data, 95):.2f} {unit}")
+
 def stats(patient_df, queue_df, service_minutes=15, total_time_hours=8):
-    #czas oczekiwania na wizyte
-    avg_waiting_time = patient_df["waiting_time"].mean()
-    print(f"Średni czas oczekiwania: {round(avg_waiting_time,2)} min")
-    median_waiting = patient_df['waiting_time'].median()
-    print(f"Mediana czasu oczekiwania: {round(median_waiting,2)} min")
-    min_waiting = patient_df['waiting_time'].min()
-    print(f"Minimalna wartość czasu oczekiwania: {round(min_waiting,2)} min")
-    max_waiting = patient_df['waiting_time'].max()
-    print(f"Maksymalna wartość czasu oczekiwania: {round(max_waiting,2)} min")
-    #Ilość obsużonych pacjentów
+    #Ilość obsłużonych pacjentów
     served_patients = len(patient_df)
     print(f"Ilość obsłużonych pacjentów: {served_patients}")
 
+    n = queue_df.index.get_level_values('day').unique().shape[0]
+    print(f"Liczba dni symulacji: {n}")
 
+    daily_waiting_times = []
+    for day in range(1, n+1):
+        day_patients = patient_df.xs(day, level='day')
+        if len(day_patients) == 0:
+            continue
+        
+        avg_wait = day_patients["waiting_time"].mean()
+        daily_waiting_times.append(avg_wait)
+    
+    # Statystyki czasu oczekiwania per dzień
+    print_statistics(daily_waiting_times, "średni czas oczekiwania na wizytę", "min")
     #Długość kolejki - średnia ważona per dzień
     daily_queue_lengths = []
     
@@ -62,9 +85,22 @@ def stats(patient_df, queue_df, service_minutes=15, total_time_hours=8):
     overall_avg_queue = np.mean(daily_queue_lengths) if daily_queue_lengths else 0
     print(f"Średnia długość kolejki: {round(overall_avg_queue, 2)}")
 
+    print_statistics(daily_queue_lengths, "średnia długość kolejki per dzień")
+
     #Czas pracy lekarzy
     num_doctors = patient_df['room'].nunique()
-    total_service_time = patient_df["service_time"].sum()
-    total_available_minutes =  total_time_hours * 60 * n * num_doctors
-    doctor_utilization = (total_service_time / total_available_minutes) * 100
-    print(f"Średnie wykorzystanie lekarza: {round(doctor_utilization, 2)} %")
+    total_available_minutes_per_day = total_time_hours * 60
+    
+    daily_utilizations = []
+    for day in range(1, n+1):
+        day_patients = patient_df.xs(day, level='day')
+        if len(day_patients) == 0:
+            daily_utilizations.append(0)
+            continue
+        
+        day_service_time = day_patients["service_time"].sum()
+        day_utilization = (day_service_time / (total_available_minutes_per_day * num_doctors)) * 100
+        daily_utilizations.append(day_utilization)
+    
+    # Statystyki wykorzystania
+    print_statistics(daily_utilizations, "współczynnik wykorzystania lekarzy", "%")
