@@ -48,44 +48,35 @@ def stats(patient_df, queue_df, service_minutes=15, total_time_hours=8):
     
     # Statystyki czasu oczekiwania per dzień
     print_statistics(daily_waiting_times, "średni czas oczekiwania na wizytę", "min")
-    #Długość kolejki - średnia ważona per dzień
+     # Długość kolejki - średnia ważona per dzień
     daily_queue_lengths = []
+    total_sim_time = total_time_hours * 60  # ZMIANA: całkowity czas symulacji (480 min)
     
-    n = queue_df.index.get_level_values('day').unique().shape[0]  # Liczba dni w danych
-    print(f"Liczba dni symulacji: {n}")
-
     for day in range(1, n+1):
-        day_queue = queue_df.xs(day, level='day').sort_index()  # Sortuj po czasie!
+        day_queue = queue_df.xs(day, level='day').sort_index()
         if len(day_queue) == 0:
             continue
             
-        # Oblicz średnią ważoną dla tego dnia
         time_intervals = []
         queue_lengths = []
         
-        # Wyodrębnij czasy i długości kolejki
         for time, length in day_queue.itertuples():
             time_intervals.append(time)
             queue_lengths.append(length)
         
-        # Oblicz wagi (czas trwania dla każdej obserwacji)
         weighted_sum = 0
         for i in range(len(time_intervals) - 1):
             duration = time_intervals[i + 1] - time_intervals[i]
             weighted_sum += queue_lengths[i] * duration
         
-        # Dodaj ostatni interwał do końca dnia
-        last_duration = service_minutes - time_intervals[-1]
+        # POPRAWKA: użyj total_sim_time zamiast service_minutes
+        last_duration = total_sim_time - time_intervals[-1]
         weighted_sum += queue_lengths[-1] * last_duration
         
-        daily_average = weighted_sum / service_minutes
+        daily_average = weighted_sum / total_sim_time
         daily_queue_lengths.append(daily_average)
-    
-    # Średnia ze wszystkich dni
-    overall_avg_queue = np.mean(daily_queue_lengths) if daily_queue_lengths else 0
-    print(f"Średnia długość kolejki: {round(overall_avg_queue, 2)}")
 
-    print_statistics(daily_queue_lengths, "średnia długość kolejki per dzień")
+    print_statistics(daily_queue_lengths, "średnia długość kolejki per dzień", "osób")
 
     #Czas pracy lekarzy
     num_doctors = patient_df['room'].nunique()
